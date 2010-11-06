@@ -11,5 +11,8 @@ core = 7.x
 ; Base module files
 files[] = commerce_authnet.module
 
+; Includes
+files[] = includes/commerce_authnet.admin.inc
+
 ; Simple tests
 ; files[] = tests/commerce_authnet.test
