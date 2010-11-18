@@ -65,8 +65,8 @@ function commerce_authnet_commerce_payment_method_info() {
 
   $payment_methods['authnet_aim'] = array(
     'base' => 'commerce_authnet_aim',
-    'title' => t('Authorize.Net AIM'),
-    'short_title' => t('Authorize.Net'),
+    'title' => t('Authorize.Net AIM - Credit Card'),
+    'short_title' => t('Authorize.Net CC'),
     'display_title' => t('Credit card'),
     'description' => t('Integrates Authorize.Net Advanced Integration Method for card not present CC transactions.'),
   );
@@ -84,7 +84,7 @@ function commerce_authnet_aim_settings_form($settings = NULL) {
   $settings = (array) $settings + array(
     'login' => '',
     'tran_key' => '',
-    'txn_mode' => 'live_test',
+    'txn_mode' => AUTHNET_TXN_MODE_LIVE_TEST,
     'txn_type' => COMMERCE_CREDIT_AUTH_CAPTURE,
     'email_customer' => FALSE,
     'log' => array('request' => '0', 'response' => '0'),
@@ -278,7 +278,7 @@ function commerce_authnet_aim_request($payment_method, $nvp = array()) {
     $log_nvp = $nvp;
     $log_nvp['x_login'] = str_repeat('X', strlen($log_nvp['x_login']));
     $log_nvp['x_tran_key'] = str_repeat('X', strlen($log_nvp['x_tran_key']));
-    $log_nvp['x_card_num'] = 'XXXX' . substr($log_nvp['x_card_num'], -4);
+    $log_nvp['x_card_num'] = str_repeat('X', strlen($log_nvp['x_card_num']) - 4) . substr($log_nvp['x_card_num'], -4);
 
     if (!empty($log_nvp['x_card_code'])) {
       $log_nvp['x_card_code'] = str_repeat('X', strlen($log_nvp['x_card_code']));
