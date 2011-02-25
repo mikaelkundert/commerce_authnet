@@ -1,4 +1,3 @@
-; $Id$
 name = Authorize.Net
 description = Implements Authorize.Net payment services for use with Drupal Commerce.
 package = Commerce (contrib)
