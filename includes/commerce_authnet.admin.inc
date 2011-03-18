@@ -53,8 +53,70 @@ function commerce_authnet_aim_capture_form($form, &$form_state, $order, $transac
 }
 
 /**
+ * Validate handler: ensure a valid amount is given.
+ */
+function commerce_authnet_aim_capture_form_validate($form, &$form_state) {
+  $transaction = $form_state['transaction'];
+  $amount = $form_state['values']['amount'];
+
+  // Ensure a positive numeric amount has been entered for capture.
+  if (!is_numeric($amount) || $amount <= 0) {
+    form_set_error('amount', t('You must specify a positive numeric amount to capture.'));
+  }
+
+  // Ensure the amount is less than or equal to the authorization amount.
+  if ($amount > $transaction->amount) {
+    form_set_error('amount', t('You cannot capture more than you authorized through Authorize.Net.'));
+  }
+
+  // If the authorization has expired, display an error message and redirect.
+  if (time() - $transaction->created > 86400 * 30) {
+    drupal_set_message(t('This authorization has passed its 30 day limit cannot be captured.'), 'error');
+    drupal_goto('admin/commerce/orders/' . $form_state['order']->order_id . '/payment');
+  }
+}
+
+/**
  * Submit handler: process a prior authorization capture via AIM.
  */
 function commerce_authnet_aim_capture_form_submit($form, &$form_state) {
-  // TODO: Process the API request and update the transaction.
+  $transaction = $form_state['transaction'];
+  $amount = $form_state['values']['amount'];
+
+  // Build a name-value pair array for this transaction.
+  $nvp = array(
+    'x_type' => 'PRIOR_AUTH_CAPTURE',
+    'x_trans_id' => $transaction->remote_id,
+    'x_amount' => $amount,
+  );
+
+  // Submit the request to Authorize.Net.
+  $response = commerce_authnet_aim_request($form_state['payment_method'], $nvp);
+
+  // Update and save the transaction based on the response.
+  $transaction->payload[REQUEST_TIME] = $response;
+
+  // If we didn't get an approval response code...
+  if ($response[0] != '1') {
+    // Display an error message but leave the transaction pending.
+    drupal_set_message(t('Prior authorization capture failed, so the transaction will remain in a pending status.'), 'error');
+    drupal_set_message(check_plain($response[3]), 'error');
+  }
+  else {
+    drupal_set_message(t('Prior authorization captured successfully.'));
+
+    // Update the transaction amount to the actual capture amount.
+    $transaction->amount = $amount;
+
+    // Set the remote and local status accordingly.
+    $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+    $transaction->remote_status = $response[11];
+
+    // Append a capture indication to the result message.
+    $transaction->message .= '<br />' . t('Captured: @date', array('@date' => format_date(REQUEST_TIME, 'short')));
+  }
+
+  commerce_payment_transaction_save($transaction);
+
+  $form_state['redirect'] = 'admin/commerce/orders/' . $form_state['order']->order_id . '/payment';
 }

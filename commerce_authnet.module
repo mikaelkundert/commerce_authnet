@@ -52,6 +52,11 @@ function commerce_authnet_aim_capture_access($order, $transaction) {
     return FALSE;
   }
 
+  // Return FALSE if it is more than 30 days past the original authorization.
+  if (time() - $transaction->created > 86400 * 30) {
+    return FALSE;
+  }
+
   // Allow access if the user can update payments on this order.
   return commerce_payment_transaction_access('update', $order, $transaction);
 }
@@ -277,7 +282,10 @@ function commerce_authnet_aim_request($payment_method, $nvp = array()) {
     $log_nvp = $nvp;
     $log_nvp['x_login'] = str_repeat('X', strlen($log_nvp['x_login']));
     $log_nvp['x_tran_key'] = str_repeat('X', strlen($log_nvp['x_tran_key']));
-    $log_nvp['x_card_num'] = str_repeat('X', strlen($log_nvp['x_card_num']) - 4) . substr($log_nvp['x_card_num'], -4);
+
+    if (!empty($log_nvp['x_card_num'])) {
+      $log_nvp['x_card_num'] = str_repeat('X', strlen($log_nvp['x_card_num']) - 4) . substr($log_nvp['x_card_num'], -4);
+    }
 
     if (!empty($log_nvp['x_card_code'])) {
       $log_nvp['x_card_code'] = str_repeat('X', strlen($log_nvp['x_card_code']));
