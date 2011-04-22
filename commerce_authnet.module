@@ -311,6 +311,9 @@ function commerce_authnet_aim_request($payment_method, $nvp = array()) {
     'x_email_customer' => $payment_method['settings']['email_customer'],
   );
 
+  // Allow modules to alter parameters of the API request.
+  drupal_alter('commerce_authnet_aim_request', $nvp);
+
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] == 'request') {
     // Mask the credit card number and CVV.
