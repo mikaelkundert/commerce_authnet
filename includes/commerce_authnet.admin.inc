@@ -20,11 +20,14 @@ function commerce_authnet_aim_capture_form($form, &$form_state, $order, $transac
   $balance = commerce_payment_order_balance($order);
 
   if ($balance['amount'] > 0 && $balance['amount'] < $transaction->amount) {
-    $default = $balance['amount'];
+    $default_amount = $balance['amount'];
   }
   else {
-    $default = $transaction->amount;
+    $default_amount = $transaction->amount;
   }
+
+  // Convert the price amount to a user friendly decimal value.
+  $default_amount = commerce_currency_amount_to_decimal($default_amount, $transaction->currency_code);
 
   $description = implode('<br />', array(
     t('Authorization: @amount', array('@amount' => commerce_currency_format($transaction->amount, $transaction->currency_code))),
@@ -35,7 +38,7 @@ function commerce_authnet_aim_capture_form($form, &$form_state, $order, $transac
     '#type' => 'textfield',
     '#title' => t('Capture amount'),
     '#description' => $description,
-    '#default_value' => commerce_currency_round($default, commerce_currency_load($transaction->currency_code)),
+    '#default_value' => $default_amount,
     '#field_suffix' => check_plain($transaction->currency_code),
     '#size' => 16,
   );
@@ -65,7 +68,7 @@ function commerce_authnet_aim_capture_form_validate($form, &$form_state) {
   }
 
   // Ensure the amount is less than or equal to the authorization amount.
-  if ($amount > $transaction->amount) {
+  if ($amount > commerce_currency_amount_to_decimal($transaction->amount, $transaction->currency_code)) {
     form_set_error('amount', t('You cannot capture more than you authorized through Authorize.Net.'));
   }
 
@@ -106,7 +109,7 @@ function commerce_authnet_aim_capture_form_submit($form, &$form_state) {
     drupal_set_message(t('Prior authorization captured successfully.'));
 
     // Update the transaction amount to the actual capture amount.
-    $transaction->amount = $amount;
+    $transaction->amount = commerce_currency_decimal_to_amount($amount, $transaction->currency_code);
 
     // Set the remote and local status accordingly.
     $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
