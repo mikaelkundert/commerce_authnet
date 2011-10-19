@@ -97,14 +97,14 @@ function commerce_authnet_aim_settings_form($settings = NULL) {
   $form['login'] = array(
     '#type' => 'textfield',
     '#title' => t('API Login ID'),
-    '#description' => t('Where this can be found.'),
+    '#description' => t('Your API Login ID is different from the username you use to login to your Authorize.Net account. Once you login, browse to your Account tab and click the <em>API Login ID and Transaction Key</em> link to find your API Login ID. If you are using a new Authorize.Net account, you may still need to generate an ID.'),
     '#default_value' => $settings['login'],
     '#required' => TRUE,
   );
   $form['tran_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Transaction Key'),
-    '#description' => t('Where this can be found.'),
+    '#description' => t('Your Transaction Key can be found on the same screen as your API Login ID. However, it will not be readily displayed. You must answer your security question and submit a form to see your Transaction Key.'),
     '#default_value' => $settings['tran_key'],
     '#required' => TRUE,
   );
