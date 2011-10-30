@@ -180,7 +180,7 @@ function commerce_authnet_aim_submit_form($payment_method, $pane_values, $checko
  */
 function commerce_authnet_aim_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // If the customer specified a card on file, skip the normal validation.
-  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cim_cardonfile'] && $pane_values['credit_card']['cardonfile_store']) {
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cim_cardonfile'] && $pane_values['cardonfile'] !== 'new') {
     return;
   }
 
