@@ -73,7 +73,10 @@ function commerce_authnet_commerce_payment_method_info() {
     'short_title' => t('Authorize.Net CC'),
     'display_title' => t('Credit card'),
     'description' => t('Integrates Authorize.Net Advanced Integration Method for card not present CC transactions.'),
-    'cardonfile' => 'multiple',
+    'cardonfile' => array(
+      'update callback' => 'commerce_authnet_cim_cardonfile_update',
+      'delete callback' => 'commerce_authnet_cim_cardonfile_delete',
+    ),
   );
 
   return $payment_methods;
@@ -553,6 +556,21 @@ function commerce_authnet_cim_submit_form_submit($payment_method, $pane_form, $p
 }
 
 /**
+ * Card on file callback: deletes the associated customer payment profile.
+ */
+function commerce_authnet_cim_cardonfile_delete($payment_method, $card_data) {
+  // Extract the Customer Profile and Payment Profile IDs from the remote_id.
+  list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data['remote_id']);
+
+  // Fetch the response from the API server and let Card on File know that the
+  // delete was either successful or not necessary.
+  $xml_response = commerce_authnet_cim_delete_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $cim_payment_profile_id);
+  $code = (string) $xml_response->messages->message->code;
+
+  return in_array($code, array('I00001', 'E00040'));
+}
+
+/**
  * Generates a billTo array for CIM API requests.
  *
  * @param $order
@@ -627,7 +645,7 @@ function commerce_authnet_cim_credit_card_array($payment_details) {
  * @return
  *   A SimpleXMLElement containing the API response.
  *
- * @see commerce_authnet_cim_creditcard_array()
+ * @see commerce_authnet_cim_credit_card_array()
  */
 function commerce_authnet_cim_create_customer_profile_request($payment_method, $order, $payment_details) {
   $billto = commerce_authnet_cim_billto_array($order);
@@ -678,7 +696,7 @@ function commerce_authnet_cim_create_customer_profile_request($payment_method, $
  * @return
  *   A SimpleXMLElement containing the API response.
  *
- * @see commerce_authnet_cim_creditcard_array()
+ * @see commerce_authnet_cim_credit_card_array()
  */
 function commerce_authnet_cim_create_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $order, $payment_details) {
   $billto = commerce_authnet_cim_billto_array($order);
@@ -700,6 +718,30 @@ function commerce_authnet_cim_create_customer_payment_profile_request($payment_m
   }
 
   return commerce_authnet_cim_request($payment_method, 'createCustomerPaymentProfileRequest', $api_request_data);
+}
+
+/**
+ * Submits a deleteCustomerPaymentProfileRequest XML CIM API request to Authorize.Net.
+ *
+ * @param $payment_method
+ *   The payment method instance array containing the API credentials for a CIM
+ *   enabled Authorize.Net account.
+ * @param $cim_customer_profile_id
+ *   A numerical CIM Customer Profile ID.
+ * @param $cim_payment_profile_id
+ *   A numerical CIM Customer Payment Profile ID.
+ *
+ * @return
+ *   A SimpleXMLElement containing the API response.
+ */
+function commerce_authnet_cim_delete_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $cim_payment_profile_id) {
+  // Build the payment profile delete request data.
+  $api_request_data = array(
+    'customerProfileId' => $cim_customer_profile_id,
+    'customerPaymentProfileId' => $cim_payment_profile_id,
+  );
+
+  return commerce_authnet_cim_request($payment_method, 'deleteCustomerPaymentProfileRequest', $api_request_data);
 }
 
 /**
