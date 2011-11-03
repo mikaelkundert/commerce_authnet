@@ -556,9 +556,81 @@ function commerce_authnet_cim_submit_form_submit($payment_method, $pane_form, $p
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_authnet_form_commerce_cardonfile_update_form_alter(&$form, &$form_state) {
+  // Extract the card data from the form and load the payment method instance.
+  $card_data = $form['card_data']['#value'];
+  $payment_method = commerce_payment_method_instance_load($card_data['instance_id']);
+
+  // Extract the Customer Profile and Payment Profile IDs from the remote_id.
+  list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data['remote_id']);
+
+  // Load the full payment profile from Authorize.Net.
+  $payment_profile_xml = commerce_authnet_cim_get_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $cim_payment_profile_id);
+
+  if ($payment_profile_xml->messages->message->code == 'I00001') {
+    $billto = $payment_profile_xml->paymentProfile->billTo;
+
+    $address = array(
+      '<strong>' . t('Billing address:') . '</strong>',
+      (string) $billto->firstName . ' ' . (string) $billto->lastName,
+      (string) $billto->company,
+      (string) $billto->address,
+      (string) $billto->city . ', ' . (string) $billto->state . ' ' . (string) $billto->zip,
+      (string) $billto->country,
+    );
+
+    // Add the address info to the form.
+    $form['billto'] = array(
+      '#type' => 'markup',
+      '#markup' => '<div class="commerce-authnet-cim-billto">' . implode('<br />', array_diff($address, array(''))) . '</div>',
+      '#weight' => -50,
+    );
+
+    $form_state['billto_xml'] = $billto;
+  }
+}
+
+/**
+ * Card on file callback: updates the associated customer payment profile.
+ */
+function commerce_authnet_cim_cardonfile_update($form, &$form_state, $payment_method, $card_data) {
+  // Extract the Customer Profile and Payment Profile IDs from the remote_id.
+  list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data['remote_id']);
+
+  if ($form_state['values']['credit_card']['number'] != $form['credit_card']['number']['#default_value']) {
+    $number = $form_state['values']['credit_card']['number'];
+  }
+  else {
+    $number = 'XXXX' . $card_data['card_number'];
+  }
+
+  // Build the base profile update data.
+  $api_request_data = array(
+    'customerProfileId' => $cim_customer_profile_id,
+    'paymentProfile' => array(
+      'payment' => array(
+        'creditCard' => array(
+          'cardNumber' => $number,
+          'expirationDate' => $card_data['card_exp_year'] . '-' . $card_data['card_exp_month'],
+        ),
+      ),
+      'customerPaymentProfileId' => $cim_payment_profile_id,
+    ),
+  );
+
+  // Fetch the response from the API server and let Card on File know if the
+  // update was successful.
+  $xml_response = commerce_authnet_cim_request($payment_method, 'updateCustomerPaymentProfileRequest', $api_request_data);
+
+  return (string) $xml_response->messages->message->code == 'I00001';
+}
+
+/**
  * Card on file callback: deletes the associated customer payment profile.
  */
-function commerce_authnet_cim_cardonfile_delete($payment_method, $card_data) {
+function commerce_authnet_cim_cardonfile_delete($form, &$form_state, $payment_method, $card_data) {
   // Extract the Customer Profile and Payment Profile IDs from the remote_id.
   list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data['remote_id']);
 
@@ -718,6 +790,30 @@ function commerce_authnet_cim_create_customer_payment_profile_request($payment_m
   }
 
   return commerce_authnet_cim_request($payment_method, 'createCustomerPaymentProfileRequest', $api_request_data);
+}
+
+/**
+ * Submits a getCustomerPaymentProfileRequest XML CIM API request to Authorize.Net.
+ *
+ * @param $payment_method
+ *   The payment method instance array containing the API credentials for a CIM
+ *   enabled Authorize.Net account.
+ * @param $cim_customer_profile_id
+ *   A numerical CIM Customer Profile ID.
+ * @param $cim_payment_profile_id
+ *   A numerical CIM Customer Payment Profile ID.
+ *
+ * @return
+ *   A SimpleXMLElement containing the API response.
+ */
+function commerce_authnet_cim_get_customer_payment_profile_request($payment_method, $cim_customer_profile_id, $cim_payment_profile_id) {
+  // Build the get payment profile request data.
+  $api_request_data = array(
+    'customerProfileId' => $cim_customer_profile_id,
+    'customerPaymentProfileId' => $cim_payment_profile_id,
+  );
+
+  return commerce_authnet_cim_request($payment_method, 'getCustomerPaymentProfileRequest', $api_request_data);
 }
 
 /**
