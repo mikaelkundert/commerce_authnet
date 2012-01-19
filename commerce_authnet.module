@@ -234,15 +234,6 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
     }
   }
 
-  // Prepare the billing address for use in the request.
-  $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
-
-  if (empty($billing_address['first_name'])) {
-    $name_parts = explode(' ', $billing_address['name_line']);
-    $billing_address['first_name'] = array_shift($name_parts);
-    $billing_address['last_name'] = implode(' ', $name_parts);
-  }
-
   // Add additional transaction invormation to the request array.
   $nvp += array(
     // Order Information
@@ -250,18 +241,36 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
     'x_description' => substr(implode(', ', $description), 0, 255),
 
     // Customer Information
-    'x_first_name' => substr($billing_address['first_name'], 0, 50),
-    'x_last_name' => substr($billing_address['last_name'], 0, 50),
-    'x_company' => substr($billing_address['organisation_name'], 0, 50),
-    'x_address' => substr($billing_address['thoroughfare'], 0, 60),
-    'x_city' => substr($billing_address['locality'], 0, 40),
-    'x_state' => substr($billing_address['administrative_area'], 0, 40),
-    'x_zip' => substr($billing_address['postal_code'], 0, 20),
-    'x_country' => $billing_address['country'],
     'x_email' => substr($order->mail, 0, 255),
     'x_cust_id' => substr($order->uid, 0, 20),
     'x_customer_ip' => substr(ip_address(), 0, 15),
   );
+
+  // Prepare the billing address for use in the request.
+  if ($order_wrapper->commerce_customer_billing->value()){
+    $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
+
+    if (empty($billing_address['first_name'])) {
+      $name_parts = explode(' ', $billing_address['name_line']);
+      $billing_address['first_name'] = array_shift($name_parts);
+      $billing_address['last_name'] = implode(' ', $name_parts);
+    }
+
+    $nvp += array(
+      // Customer Billing Address
+      'x_first_name' => substr($billing_address['first_name'], 0, 50),
+      'x_last_name' => substr($billing_address['last_name'], 0, 50),
+      'x_company' => substr($billing_address['organisation_name'], 0, 50),
+      'x_address' => substr($billing_address['thoroughfare'], 0, 60),
+      'x_city' => substr($billing_address['locality'], 0, 40),
+      'x_state' => substr($billing_address['administrative_area'], 0, 40),
+      'x_zip' => substr($billing_address['postal_code'], 0, 20),
+      'x_country' => $billing_address['country'],
+    );
+  }
+  else {
+    $billing_address = array();
+  }
 
   // Submit the request to Authorize.Net.
   $response = commerce_authnet_aim_request($payment_method, $nvp);
@@ -352,7 +361,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
             'instance_id' => $payment_method['instance_id'],
             'remote_id' => $remote_id,
             'card_type' => 'card',
-            'card_name' => $billing_address['name_line'],
+            'card_name' => !empty($billing_address['name_line']) ? $billing_address['name_line'] : '',
             'card_number' => substr($pane_values['credit_card']['number'], -4),
             'card_exp_month' => $pane_values['credit_card']['exp_month'],
             'card_exp_year' => $pane_values['credit_card']['exp_year'],
@@ -397,7 +406,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
           'instance_id' => $payment_method['instance_id'],
           'remote_id' => $remote_id,
           'card_type' => 'card',
-          'card_name' => $billing_address['name_line'],
+          'card_name' => !empty($billing_address['name_line']) ? $billing_address['name_line'] : '',
           'card_number' => substr($pane_values['credit_card']['number'], -4),
           'card_exp_month' => $pane_values['credit_card']['exp_month'],
           'card_exp_year' => $pane_values['credit_card']['exp_year'],
@@ -430,7 +439,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
               'instance_id' => $payment_method['instance_id'],
               'remote_id' => $remote_id,
               'card_type' => 'card',
-              'card_name' => $billing_address['name_line'],
+              'card_name' => !empty($billing_address['name_line']) ? $billing_address['name_line'] : '',
               'card_number' => substr($pane_values['credit_card']['number'], -4),
               'card_exp_month' => $pane_values['credit_card']['exp_month'],
               'card_exp_year' => $pane_values['credit_card']['exp_year'],
