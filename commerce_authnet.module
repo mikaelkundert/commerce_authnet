@@ -210,6 +210,12 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
     return commerce_authnet_cim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
   }
 
+  // Determine the credit card type if possible for use in later code.
+  if (!empty($pane_values['credit_card']['number'])) {
+    module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+    $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
+  }
+
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Build a name-value pair array for this transaction.
