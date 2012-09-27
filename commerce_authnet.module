@@ -76,7 +76,8 @@ function commerce_authnet_aim_capture_access($order, $transaction) {
 }
 
 /**
- * Determines access to the void form for Authorize.Net AIM credit card * transactions
+ * Determines access to the void form for Authorize.Net AIM credit card
+ * transactions
  *
  * @param $order
  *   The order the transaction is on.
@@ -89,6 +90,12 @@ function commerce_authnet_aim_capture_access($order, $transaction) {
 function commerce_authnet_aim_void_access($order, $transaction) {
   if ($transaction->payment_method != 'authnet_aim' || empty($transaction->remote_id) ||
     !in_array(strtoupper($transaction->remote_status), array('AUTH_ONLY', 'PRIOR_AUTH_CAPTURE', 'AUTH_CAPTURE'))) {
+    return FALSE;
+  }
+
+  // Return FALSE if it is more than 24 hours since the last update to the
+  // transaction, as it will already have been settled.
+  if (time() - $transaction->changed > 2600 * 24) {
     return FALSE;
   }
 
