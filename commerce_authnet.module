@@ -94,6 +94,7 @@ function commerce_authnet_aim_default_settings() {
     'cim_cardonfile' => FALSE,
     'email_customer' => FALSE,
     'log' => array('request' => '0', 'response' => '0'),
+    'card_types' => array(),
   );
 }
 
@@ -101,6 +102,8 @@ function commerce_authnet_aim_default_settings() {
  * Payment method callback: settings form.
  */
 function commerce_authnet_aim_settings_form($settings = NULL) {
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+
   // Merge default settings into the stored settings array.
   $settings = (array) $settings + commerce_authnet_aim_default_settings();
 
@@ -142,6 +145,14 @@ function commerce_authnet_aim_settings_form($settings = NULL) {
     '#default_value' => $settings['txn_type'],
   );
 
+  $form['card_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Limit accepted credit cards to the following types'),
+    '#description' => t('If you want to limit acceptable card types, you should only select those supported by your merchant account.') . '<br />' . t('If none are checked, any credit card type will be accepted.'),
+    '#options' => commerce_payment_credit_card_types(),
+    '#default_value' => $settings['card_types'],
+  );
+
   // CIM support in conjunction with AIM requires the Card on File module.
   if (module_exists('commerce_cardonfile')) {
     $form['cim_cardonfile'] = array(
@@ -175,7 +186,20 @@ function commerce_authnet_aim_settings_form($settings = NULL) {
  */
 function commerce_authnet_aim_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-  return commerce_payment_credit_card_form(array('code' => ''));
+
+  // Prepare the fields to include on the credit card form.
+  $fields = array(
+    'code' => '',
+  );
+
+  // Add the credit card types array if necessary.
+  $card_types = array_diff(array_values($payment_method['settings']['card_types']), array(0));
+
+  if (!empty($card_types)) {
+    $fields['type'] = $card_types;
+  }
+
+  return commerce_payment_credit_card_form($fields);
 }
 
 /**
