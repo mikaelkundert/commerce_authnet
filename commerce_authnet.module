@@ -330,6 +330,10 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
       case COMMERCE_CREDIT_AUTH_CAPTURE:
         $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
         break;
+
+      case COMMERCE_CREDIT_CAPTURE_ONLY:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        break;
     }
   }
 
