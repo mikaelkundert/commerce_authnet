@@ -244,9 +244,19 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
 
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
+  // Get the default transaction type from the payment method settings.
+  $txn_type = $payment_method['settings']['txn_type'];
+
+  // If txn_type has been specified in the pane values array, such as through
+  // the special select element we alter onto the payment terminal form, use
+  // that instead.
+  if (!empty($pane_values['txn_type'])) {
+    $txn_type = $pane_values['txn_type'];
+  }
+
   // Build a name-value pair array for this transaction.
   $nvp = array(
-    'x_type' => commerce_authnet_txn_type($payment_method['settings']['txn_type']),
+    'x_type' => commerce_authnet_txn_type($txn_type),
     'x_method' => 'CC',
     'x_amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
     'x_card_num' => $pane_values['credit_card']['number'],
@@ -322,7 +332,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
   }
   else {
     // Set the transaction status based on the type of transaction this was.
-    switch ($payment_method['settings']['txn_type']) {
+    switch ($txn_type) {
       case COMMERCE_CREDIT_AUTH_ONLY:
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
         break;
@@ -489,6 +499,26 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
         }
       }
     }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_authnet_form_commerce_payment_order_transaction_add_form_alter(&$form, &$form_state) {
+  // If the payment terminal is displayed for an authnet_aim transaction...
+  if (!empty($form['payment_terminal']) && $form_state['payment_method']['method_id'] == 'authnet_aim') {
+    // Add a select list to let the administrator choose a different transaction
+    // type than the payment method's default.
+    $form['payment_terminal']['payment_details']['txn_type'] = array(
+        '#type' => 'select',
+        '#title' => t('Transaction type'),
+        '#options' => array(
+            COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only'),
+            COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
+        ),
+        '#default_value' => $form_state['payment_method']['settings']['txn_type'],
+    );
   }
 }
 
@@ -1184,6 +1214,8 @@ function commerce_authnet_txn_type($txn_type) {
       return 'PRIOR_AUTH_CAPTURE';
     case COMMERCE_CREDIT_AUTH_CAPTURE:
       return 'AUTH_CAPTURE';
+    case COMMERCE_CREDIT_CAPTURE_ONLY:
+      return 'CAPTURE_ONLY';
     case COMMERCE_CREDIT_REFERENCE_SET:
     case COMMERCE_CREDIT_REFERENCE_TXN:
     case COMMERCE_CREDIT_REFERENCE_REMOVE:
@@ -1236,6 +1268,8 @@ function commerce_authnet_reverse_txn_type($txn_type) {
       return t('Prior authorization capture');
     case 'AUTH_CAPTURE':
       return t('Authorization and capture');
+    case 'CAPTURE_ONLY':
+      return t('Capture only');
     case 'CREDIT':
       return t('Credit');
     case 'VOID':
