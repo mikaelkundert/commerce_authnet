@@ -216,6 +216,32 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
     $card_type = commerce_payment_validate_credit_card_type($pane_values['credit_card']['number'], array_keys(commerce_payment_credit_card_types()));
   }
 
+  // If the charge amount is 0...
+  if ($charge['amount'] == 0) {
+    // Prevent the transaction except under limited circumstances.
+    $prevent_transaction = TRUE;
+
+    // Allow 0 amount authorizations on Visa cards.
+    if ($payment_method['settings']['txn_type'] == COMMERCE_CREDIT_AUTH_ONLY && $card_type == 'visa') {
+      $prevent_transaction = FALSE;
+    }
+
+    // If the transaction should still be prevented...
+    if ($prevent_transaction) {
+      // Create a transaction to log the skipped transaction and display a
+      // helpful message to the customer.
+      $transaction = commerce_payment_transaction_new('authnet_aim', $order->order_id);
+      $transaction->amount = $charge['amount'];
+      $transaction->currency_code = $charge['currency_code'];
+      $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      $transaction->message = t('Invalid @amount transaction not attempted.', array('@amount' => commerce_currency_format($charge['amount'], $charge['currency_code'])));
+      commerce_payment_transaction_save($transaction);
+
+      drupal_set_message('We encountered an error processing your transaction. Please contact us to resolve the issue.', 'error');
+      return FALSE;
+    }
+  }
+
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Build a name-value pair array for this transaction.
