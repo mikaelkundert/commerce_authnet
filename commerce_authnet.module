@@ -30,6 +30,19 @@ function commerce_authnet_menu() {
     'file' => 'includes/commerce_authnet.admin.inc',
   );
 
+  // Add a menu item for voiding transactions.
+  $items['admin/commerce/orders/%commerce_order/payment/%commerce_payment_transaction/authnet-aim-void'] = array(
+    'title' => 'Void',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_authnet_aim_void_form', 3, 5),
+    'access callback' => 'commerce_authnet_aim_void_access',
+    'access arguments' => array(3, 5),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'weight' => 2,
+    'file' => 'includes/commerce_authnet.admin.inc',
+  );
+
   return $items;
 }
 
@@ -48,7 +61,8 @@ function commerce_authnet_menu() {
 function commerce_authnet_aim_capture_access($order, $transaction) {
   // Return FALSE if the transaction isn't for Authorize.Net AIM or isn't
   // awaiting capture.
-  if ($transaction->payment_method != 'authnet_aim' || strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
+  if ($transaction->payment_method != 'authnet_aim' || empty($transaction->remote_id) ||
+    strtoupper($transaction->remote_status) != 'AUTH_ONLY') {
     return FALSE;
   }
 
@@ -57,7 +71,28 @@ function commerce_authnet_aim_capture_access($order, $transaction) {
     return FALSE;
   }
 
-  // Allow access if the user can update payments on this transaction.
+  // Allow access if the user can update this transaction.
+  return commerce_payment_transaction_access('update', $transaction);
+}
+
+/**
+ * Determines access to the void form for Authorize.Net AIM credit card * transactions
+ *
+ * @param $order
+ *   The order the transaction is on.
+ * @param $transaction
+ *   The payment transaction object to be voided.
+ *
+ * @return
+ *   TRUE or FALSE indicating void access.
+ */
+function commerce_authnet_aim_void_access($order, $transaction) {
+  if ($transaction->payment_method != 'authnet_aim' || empty($transaction->remote_id) ||
+    !in_array(strtoupper($transaction->remote_status), array('AUTH_ONLY', 'PRIOR_AUTH_CAPTURE', 'AUTH_CAPTURE'))) {
+    return FALSE;
+  }
+
+  // Allow access if the user can update this transaction.
   return commerce_payment_transaction_access('update', $transaction);
 }
 
