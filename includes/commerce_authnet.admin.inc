@@ -176,7 +176,6 @@ function commerce_authnet_aim_void_form_submit($form, &$form_state) {
     // Set the remote and local status accordingly.
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     $transaction->remote_status = $response[11];
-    $transaction->payload[REQUEST_TIME] = $response;
 
     // Update the transaction message to show that it has been voided.
     $transaction->message .= '<br />' . t('Voided: @date', array('@date' => format_date(REQUEST_TIME, 'short')));
@@ -306,7 +305,7 @@ function commerce_authnet_aim_credit_form_submit($form, &$form_state) {
       $transaction->payload[REQUEST_TIME] = $response;
 
       // Display a failure message and response reason from Authorize.net.
-      drupal_set_message(t('Credit failed: @reason', array('@reason' => check_plain($response[3]))), 'error');
+      drupal_set_message(t('Credit failed: @reason', array('@reason' => $response[3])), 'error');
 
       // Add an additional helper message if the transaction hadn't settled yet.
       if ($response[2] == 54) {
