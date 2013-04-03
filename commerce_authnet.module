@@ -1070,6 +1070,9 @@ function commerce_authnet_aim_request($payment_method, $nvp = array()) {
     'x_encap_char' => '"',
     'x_relay_response' => 'FALSE',
     'x_email_customer' => $payment_method['settings']['email_customer'],
+
+    // Drupal Commerce Solution ID
+    'x_solution_id' => 'A1000009',
   );
 
   // Allow modules to alter parameters of the API request.
