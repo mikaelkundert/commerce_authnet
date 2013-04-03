@@ -479,7 +479,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
 
   // If the payment failed, display an error and rebuild the form.
   if ($response[0] != '1') {
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(t('We received the following error processing your card. Please enter your information again or try a different card.'), 'error');
     drupal_set_message(check_plain($response[3]), 'error');
     return FALSE;
   }
@@ -721,7 +721,7 @@ function commerce_authnet_cim_submit_form_submit($payment_method, $pane_form, $p
 
     // If the payment failed, display an error and rebuild the form.
     if ($response[0] != '1') {
-      drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+      drupal_set_message(t('We received the following error processing your card. Please enter your information again or try a different card.'), 'error');
       drupal_set_message(check_plain($response[3]), 'error');
       return FALSE;
     }
