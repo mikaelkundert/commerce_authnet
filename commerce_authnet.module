@@ -665,7 +665,7 @@ function commerce_authnet_cim_submit_form_submit($payment_method, $pane_form, $p
         ),
       ),
     ),
-    'extraOptions' => '<![CDATA[x_delim_data=TRUE&amp;x_delim_char=|&amp;x_encap_char="&amp;x_customer_ip=' . substr(ip_address(), 0, 15) . ']]>',
+    'extraOptions' => '<![CDATA[x_delim_data=TRUE&amp;x_delim_char=|&amp;x_encap_char="&amp;x_currency_code=' . $charge['currency_code'] . '&amp;x_customer_ip=' . substr(ip_address(), 0, 15) . ']]>',
   );
 
   // If we get a response from the API server...
