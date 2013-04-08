@@ -366,7 +366,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
   $nvp = array(
     'x_type' => commerce_authnet_txn_type($txn_type),
     'x_method' => 'CC',
-    'x_amount' => commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']),
+    'x_amount' => number_format(commerce_currency_amount_to_decimal($charge['amount'], $charge['currency_code']), 2, '.', ''),
     'x_currency_code' => $charge['currency_code'],
     'x_card_num' => $pane_values['credit_card']['number'],
     'x_exp_date' => $pane_values['credit_card']['exp_month'] . $pane_values['credit_card']['exp_year'],

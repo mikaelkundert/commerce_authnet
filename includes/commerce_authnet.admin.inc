@@ -84,7 +84,7 @@ function commerce_authnet_aim_capture_form_validate($form, &$form_state) {
  */
 function commerce_authnet_aim_capture_form_submit($form, &$form_state) {
   $transaction = $form_state['transaction'];
-  $amount = $form_state['values']['amount'];
+  $amount = number_format($form_state['values']['amount'], 2, '.', '');
 
   // Build a name-value pair array for this transaction.
   $nvp = array(
@@ -252,7 +252,7 @@ function commerce_authnet_aim_credit_form_validate($form, &$form_state) {
  */
 function commerce_authnet_aim_credit_form_submit($form, &$form_state) {
   $transaction = $form_state['transaction'];
-  $amount = $form_state['values']['amount'];
+  $amount = number_format($form_state['values']['amount'], 2, '.', '');
   $order = $form_state['order'];
   $payment_method = $form_state['payment_method'];
 
