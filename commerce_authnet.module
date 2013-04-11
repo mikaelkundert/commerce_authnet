@@ -13,7 +13,7 @@ define('AUTHNET_TXN_MODE_DEVELOPER', 'developer');
 
 /**
  * Implements hook_menu().
- */
+*/
 function commerce_authnet_menu() {
   $items = array();
 
@@ -635,13 +635,13 @@ function commerce_authnet_form_commerce_payment_order_transaction_add_form_alter
     // Add a select list to let the administrator choose a different transaction
     // type than the payment method's default.
     $form['payment_terminal']['payment_details']['txn_type'] = array(
-        '#type' => 'select',
-        '#title' => t('Transaction type'),
-        '#options' => array(
-            COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only'),
-            COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
-        ),
-        '#default_value' => $form_state['payment_method']['settings']['txn_type'],
+      '#type' => 'select',
+      '#title' => t('Transaction type'),
+      '#options' => array(
+        COMMERCE_CREDIT_AUTH_ONLY => t('Authorization only'),
+        COMMERCE_CREDIT_AUTH_CAPTURE => t('Authorization and capture'),
+      ),
+      '#default_value' => $form_state['payment_method']['settings']['txn_type'],
     );
   }
 }
