@@ -291,10 +291,12 @@ function commerce_authnet_aim_submit_form($payment_method, $pane_values, $checko
   );
 
   // Add the credit card types array if necessary.
-  $card_types = array_diff(array_values($payment_method['settings']['card_types']), array(0));
+  if (isset($payment_method['settings']['card_types'])) {
+    $card_types = array_diff(array_values($payment_method['settings']['card_types']), array(0));
 
-  if (!empty($card_types)) {
-    $fields['type'] = $card_types;
+    if (!empty($card_types)) {
+      $fields['type'] = $card_types;
+    }
   }
 
   return commerce_payment_credit_card_form($fields);
