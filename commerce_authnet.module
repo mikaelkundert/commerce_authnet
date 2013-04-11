@@ -175,7 +175,8 @@ function commerce_authnet_aim_default_settings() {
     'tran_key' => '',
     'txn_mode' => AUTHNET_TXN_MODE_LIVE_TEST,
     'txn_type' => COMMERCE_CREDIT_AUTH_CAPTURE,
-    'cim_cardonfile' => FALSE,
+    'cardonfile' => FALSE,
+    'continuous' => FALSE,
     'email_customer' => FALSE,
     'log' => array('request' => '0', 'response' => '0'),
     'card_types' => array(),
@@ -239,11 +240,25 @@ function commerce_authnet_aim_settings_form($settings = NULL) {
 
   // CIM support in conjunction with AIM requires the Card on File module.
   if (module_exists('commerce_cardonfile')) {
-    $form['cim_cardonfile'] = array(
+    $form['cardonfile'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable Card on File functionality with this payment method using Authorize.Net CIM.'),
       '#description' => t('This requires an Authorize.Net account upgraded to include support for CIM (Customer Information Manager).'),
-      '#default_value' => $settings['cim_cardonfile'],
+      '#default_value' => $settings['cardonfile'],
+    );
+
+    $form['continuous'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Use continuous authority transactions.'),
+      '#description' => t('A continuous authority merchant account will be required.'),
+      '#default_value' => $settings['continuous'],
+    );
+  }
+
+  else {
+    $form['cardonfile'] = array(
+      '#type' => 'markup',
+      '#markup' => t('To enable Card on File funcitionality download and install the Card on File module.'),
     );
   }
 
@@ -291,7 +306,7 @@ function commerce_authnet_aim_submit_form($payment_method, $pane_values, $checko
  */
 function commerce_authnet_aim_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // If the customer specified a card on file, skip the normal validation.
-  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cim_cardonfile']) &&
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
     return;
   }
@@ -314,7 +329,7 @@ function commerce_authnet_aim_submit_form_validate($payment_method, $pane_form, 
 function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // If the customer specified payment using a card on file, attempt that now
   // and simply return the result.
-  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cim_cardonfile'] &&
+  if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile'] &&
     !empty($pane_values['cardonfile']) && $pane_values['cardonfile'] !== 'new') {
     return commerce_authnet_cim_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge);
   }
@@ -486,7 +501,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
   }
 
   // If Card on File storage is enabled via CIM and the form says to store data...
-  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cim_cardonfile']) &&
+  if (module_exists('commerce_cardonfile') && !empty($payment_method['settings']['cardonfile']) &&
     !empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
     // Build a payment details array for the credit card.
     $payment_details = array(
