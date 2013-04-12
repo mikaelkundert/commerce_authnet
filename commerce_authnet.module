@@ -157,6 +157,7 @@ function commerce_authnet_commerce_payment_method_info() {
     'display_title' => t('Credit card'),
     'description' => t('Integrates Authorize.Net Advanced Integration Method for card not present CC transactions.'),
     'cardonfile' => array(
+      'charge callback' => 'commerce_authnet_cim_cardonfile_charge',
       'update callback' => 'commerce_authnet_cim_cardonfile_update',
       'delete callback' => 'commerce_authnet_cim_cardonfile_delete',
     ),
