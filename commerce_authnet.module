@@ -673,12 +673,6 @@ function commerce_authnet_form_commerce_cardonfile_update_form_alter(&$form, &$f
   $card_data = $form['card_data']['#value'];
   $payment_method = commerce_payment_method_instance_load($card_data->instance_id);
 
-  // If this is not an Authorize.Net card then bail.
-  if ($payment_method['method_id'] != 'authnet_aim') {
-    return;
-  }
-
-
   // Extract the Customer Profile and Payment Profile IDs from the remote_id.
   list($cim_customer_profile_id, $cim_payment_profile_id) = explode('|', $card_data->remote_id);
 
