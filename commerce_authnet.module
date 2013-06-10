@@ -363,7 +363,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
       $transaction->message = t('Invalid @amount transaction not attempted.', array('@amount' => commerce_currency_format($charge['amount'], $charge['currency_code'])));
       commerce_payment_transaction_save($transaction);
 
-      drupal_set_message('We encountered an error processing your transaction. Please contact us to resolve the issue.', 'error');
+      drupal_set_message(t('We encountered an error processing your transaction. Please contact us to resolve the issue.'), 'error');
       return FALSE;
     }
   }
