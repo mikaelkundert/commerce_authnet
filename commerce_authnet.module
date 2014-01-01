@@ -108,7 +108,7 @@ function commerce_authnet_aim_void_access($order, $transaction) {
 
   // Return FALSE if it is more than 24 hours since the last update to the
   // transaction, as it will already have been settled.
-  if (time() - $transaction->changed > 2600 * 24) {
+  if (time() - $transaction->changed > 3600 * 24) {
     return FALSE;
   }
 
