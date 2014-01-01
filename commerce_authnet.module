@@ -418,7 +418,7 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
   );
 
   // Prepare the billing address for use in the request.
-  if ($order_wrapper->commerce_customer_billing->value()){
+  if (isset($order->commerce_customer_billing) && $order_wrapper->commerce_customer_billing->value()){
     $billing_address = $order_wrapper->commerce_customer_billing->commerce_customer_address->value();
 
     if (empty($billing_address['first_name'])) {
@@ -441,6 +441,29 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
   }
   else {
     $billing_address = array();
+  }
+
+  // Prepare the shipping address for use in the request.
+  if (isset($order->commerce_customer_shipping) && $order_wrapper->commerce_customer_shipping->value()) {
+    $shipping_address = $order_wrapper->commerce_customer_shipping->commerce_customer_address->value();
+
+    if (empty($shipping_address['first_name'])) {
+      $name_parts = explode(' ', $shipping_address['name_line']);
+      $shipping_address['first_name'] = array_shift($name_parts);
+      $shipping_address['last_name'] = implode(' ', $name_parts);
+    }
+
+    $nvp += array(
+      // Customer shipping Address
+      'x_ship_to_first_name' => substr($shipping_address['first_name'], 0, 50),
+      'x_ship_to_last_name' => substr($shipping_address['last_name'], 0, 50),
+      'x_ship_to_company' => substr($shipping_address['organisation_name'], 0, 50),
+      'x_ship_to_address' => substr($shipping_address['thoroughfare'], 0, 60),
+      'x_ship_to_city' => substr($shipping_address['locality'], 0, 40),
+      'x_ship_to_state' => substr($shipping_address['administrative_area'], 0, 40),
+      'x_ship_to_zip' => substr($shipping_address['postal_code'], 0, 20),
+      'x_ship_to_country' => $shipping_address['country'],
+    );
   }
 
   // Submit the request to Authorize.Net.
@@ -940,6 +963,39 @@ function commerce_authnet_cim_billto_array($order) {
 }
 
 /**
+ * Generates a shipTo array for CIM API requests.
+ *
+ * @param $order
+ *   The order object containing the shipping information used for the billTo.
+ *
+ * @return
+ *   An array used to generate the shipTo XML in CIM API requests.
+ */
+function commerce_authnet_cim_shipto_array($order) {
+  // Prepare the shipping address for use in the request.
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $shipping_address = $order_wrapper->commerce_customer_shipping->commerce_customer_address->value();
+
+  // Ensure we have a first and last name in the address.
+  if (empty($shipping_address['first_name'])) {
+    $name_parts = explode(' ', $shipping_address['name_line']);
+    $shipping_address['first_name'] = array_shift($name_parts);
+    $shipping_address['last_name'] = implode(' ', $name_parts);
+  }
+
+  // Return the shipTo array.
+  return array(
+    'firstName' => substr($shipping_address['first_name'], 0, 50),
+    'lastName' => substr($shipping_address['last_name'], 0, 50),
+    'company' => substr($shipping_address['organisation_name'], 0, 50),
+    'address' => substr($shipping_address['thoroughfare'], 0, 60),
+    'city' => substr($shipping_address['locality'], 0, 40),
+    'state' => substr($shipping_address['administrative_area'], 0, 40),
+    'zip' => substr($shipping_address['postal_code'], 0, 20),
+    'country' => $shipping_address['country'],
+  );
+}
+/**
  * Generates a creditCard array for CIM API requests.
  *
  * @param $payment_details
@@ -997,6 +1053,15 @@ function commerce_authnet_cim_create_customer_profile_request($payment_method, $
       ),
     ),
   );
+
+  // Add the shipping address if available.
+  if (isset($order->commerce_customer_shipping)) {
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+    if ($order_wrapper->commerce_customer_shipping->value()) {
+      $api_request_data['profile']['shipToList'] = commerce_authnet_cim_shipto_array($order);
+    }
+  }
 
   // If the order is anonymous, unset the merchantCustomerId from the request.
   if (empty($api_request_data['profile']['merchantCustomerId'])) {
