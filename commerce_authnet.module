@@ -1482,7 +1482,7 @@ function commerce_authnet_cim_transaction_element_name($txn_type) {
       return 'profileTransCaptureOnly';
     case COMMERCE_CREDIT_PRIOR_AUTH_CAPTURE:
       return 'profileTransPriorAuthCapture';
-    case COMMERCE_CREDIT_CREDT:
+    case COMMERCE_CREDIT_CREDIT:
       return 'profileTransRefund';
     case COMMERCE_CREDIT_VOID:
       return 'profileTransVoid';
