@@ -540,7 +540,10 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
     }
 
     // First look to see if we already have cards on file for the user.
-    $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
+    $stored_cards = array();
+    if (!user_is_anonymous()) {
+      $stored_cards = commerce_cardonfile_load_multiple_by_uid($order->uid, $payment_method['instance_id']);
+    }
     $add_to_profile = NULL;
 
     // If we didn't find any, attempt to make a new Customer Profile now.
