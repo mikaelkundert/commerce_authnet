@@ -1201,7 +1201,7 @@ function commerce_authnet_aim_request($payment_method, $nvp = array()) {
   );
 
   // Allow modules to alter parameters of the API request.
-  drupal_alter('commerce_authnet_aim_request', $nvp);
+  drupal_alter('commerce_authnet_aim_request', $nvp, $payment_method);
 
   // Log the request if specified.
   if ($payment_method['settings']['log']['request'] == 'request') {
@@ -1339,7 +1339,7 @@ function commerce_authnet_cim_request($payment_method, $request_type, $api_reque
   commerce_simplexml_add_children($api_request_element, $api_request_data);
 
   // Allow modules an opportunity to alter the request before it is sent.
-  drupal_alter('commerce_authnet_cim_request', $api_request_element);
+  drupal_alter('commerce_authnet_cim_request', $api_request_element, $payment_method, $request_type);
 
   // Generate an XML string.
   $xml = $api_request_element->asXML();
