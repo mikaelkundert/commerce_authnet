@@ -775,7 +775,7 @@ function commerce_authnet_cim_cardonfile_charge($payment_method, $card_data, $or
         ),
       ),
     ),
-    'extraOptions' => '<![CDATA[x_delim_data=TRUE&amp;x_delim_char=|&amp;x_encap_char="&amp;x_solution_id=A1000009&amp;x_currency_code=' . $charge['currency_code'] . '&amp;x_customer_ip=' . substr(ip_address(), 0, 15) . ']]>',
+    'extraOptions' => '<![CDATA[x_delim_data=TRUE&amp;x_delim_char=|&amp;x_encap_char="&amp;x_solution_id=A1000009&amp;x_currency_code=' . $charge['currency_code'] . '&amp;x_customer_ip=' . substr(ip_address(), 0, 15) . '&amp;x_email_customer=' . $payment_method['settings']['email_customer'] . ']]>',
   );
 
   // If we get a response from the API server...
