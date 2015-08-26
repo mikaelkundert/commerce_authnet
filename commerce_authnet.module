@@ -597,10 +597,41 @@ function commerce_authnet_aim_submit_form_submit($payment_method, $pane_form, $p
 
       // If the Payment Profile creation was a success, store the new card on
       // file data locally.
-      if ((string) $response->messages->resultCode == 'Ok') {
-        // Build a remote ID that includes the Customer Profile ID and the new
-        // Payment Profile ID.
-        $remote_id = $add_to_profile . '|' . (string) $response->customerPaymentProfileId;
+      if ((string) $response->messages->resultCode == 'Ok' || (string) $response->messages->message->code == 'E00039') {
+        // If we got a duplicate code, then the payment profile already exists
+        // at Authorize.Net and needs to be represented locally.
+        if ((string) $response->messages->message->code == 'E00039') {
+          $cim_profile_response = commerce_authnet_cim_get_customer_profile_request($payment_method, $add_to_profile);
+          if ((string) $cim_profile_response->messages->resultCode == 'Ok') {
+            // Inspect the returned payment profiles to find the one that
+            // generated the duplicate error code.
+            $cim_payment_profiles = $cim_profile_response->profile->paymentProfiles;
+            if (!is_array($cim_payment_profiles)) {
+              $cim_payment_profiles = array($cim_payment_profiles);
+            }
+
+            foreach ($cim_payment_profiles as $key => $payment_profile) {
+              // We match the submitted values against the existing payment
+              // profiles using the last 4 digits of the card number. This could
+              // potentially create a conflict if the same customer has two
+              // different cards that end in the same four digits, but that is
+              // highly unlikely.
+              if (substr($pane_values['credit_card']['number'], -4) == substr($payment_profile->payment->creditCard->cardNumber, -4)) {
+                $payment_profile_id = (string) $payment_profile->customerPaymentProfileId;
+                break;
+              }
+            }
+          }
+        }
+        else {
+          $payment_profile_id = (string) $response->customerPaymentProfileId;
+        }
+
+        // Build a remote ID that includes the customer profile ID and the new
+        // or existing payment profile ID. We don't do any check here to ensure
+        // we found a payment profile ID, as we shouldn't have got a duplicate
+        // error if it didn't actually exist.
+        $remote_id = $add_to_profile . '|' . $payment_profile_id;
 
         $card_data = commerce_cardonfile_new();
         $card_data->uid = $order->uid;
@@ -906,8 +937,40 @@ function commerce_authnet_cim_cardonfile_create($form, &$form_state, $payment_me
 
     $xml_response = commerce_authnet_cim_request($payment_method, 'createCustomerPaymentProfileRequest', $api_request_data);
 
-    if ((string) $xml_response->messages->resultCode == 'Ok') {
-      $payment_profile_id = (string) $xml_response->customerPaymentProfileId;
+    if ((string) $xml_response->messages->resultCode == 'Ok' || (string) $xml_response->messages->message->code == 'E00039') {
+      // If we got a duplicate code, then the payment profile already exists
+      // at Authorize.Net and needs to be represented locally.
+      if ((string) $xml_response->messages->message->code == 'E00039') {
+        $cim_profile_response = commerce_authnet_cim_get_customer_profile_request($payment_method, $add_to_profile);
+        if ((string) $cim_profile_response->messages->resultCode == 'Ok') {
+          // Inspect the returned payment profiles to find the one that
+          // generated the duplicate error code.
+          $cim_payment_profiles = $cim_profile_response->profile->paymentProfiles;
+          if (!is_array($cim_payment_profiles)) {
+            $cim_payment_profiles = array($cim_payment_profiles);
+          }
+
+          foreach ($cim_payment_profiles as $key => $payment_profile) {
+            // We match the submitted values against the existing payment
+            // profiles using the last 4 digits of the card number. This could
+            // potentially create a conflict if the same customer has two
+            // different cards that end in the same four digits, but that is
+            // highly unlikely.
+            if (substr($number, -4) == substr($payment_profile->payment->creditCard->cardNumber, -4)) {
+              $payment_profile_id = (string) $payment_profile->customerPaymentProfileId;
+              break;
+            }
+          }
+        }
+      }
+      else {
+        $payment_profile_id = (string) $xml_response->customerPaymentProfileId;
+      }
+
+      // Build a remote ID that includes the customer profile ID and the new
+      // or existing payment profile ID. We don't do any check here to ensure
+      // we found a payment profile ID, as we shouldn't have got a duplicate
+      // error if it didn't actually exist.
       $remote_id = $add_to_profile . '|' . $payment_profile_id;
 
       $card_data_wrapper = entity_metadata_wrapper('commerce_cardonfile', $card_data);
@@ -1344,7 +1407,7 @@ function commerce_authnet_cim_create_customer_payment_profile_request($payment_m
  * @return bool|string
  *   Returns FALSE if not payment profile found, or the matching profile ID.
  */
-function commerce_authnet_cim_get_customer_profile_request($payment_method, $cim_customer_profile_id, $number) {
+function commerce_authnet_cim_get_customer_profile_request($payment_method, $cim_customer_profile_id) {
   // Query for the profile's payment profiles.
   $api_request_data = array(
     'customerProfileId' => $cim_customer_profile_id,
