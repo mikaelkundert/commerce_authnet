@@ -1570,7 +1570,7 @@ function commerce_authnet_aim_server_url($txn_mode) {
   switch ($txn_mode) {
     case AUTHNET_TXN_MODE_LIVE:
     case AUTHNET_TXN_MODE_LIVE_TEST:
-      return variable_get('commerce_authnet_aim_server_url_live', 'https://secure.authorize.net/gateway/transact.dll');
+      return variable_get('commerce_authnet_aim_server_url_live', 'https://secure2.authorize.net/gateway/transact.dll');
     case AUTHNET_TXN_MODE_DEVELOPER:
       return variable_get('commerce_authnet_aim_server_url_dev', 'https://test.authorize.net/gateway/transact.dll');
   }
@@ -1725,7 +1725,7 @@ function commerce_authnet_cim_server_url($txn_mode) {
   switch ($txn_mode) {
     case AUTHNET_TXN_MODE_LIVE:
     case AUTHNET_TXN_MODE_LIVE_TEST:
-      return variable_get('commerce_authnet_cim_server_url_live', 'https://api.authorize.net/xml/v1/request.api');
+      return variable_get('commerce_authnet_cim_server_url_live', 'https://api2.authorize.net/xml/v1/request.api');
     case AUTHNET_TXN_MODE_DEVELOPER:
       return variable_get('commerce_authnet_cim_server_url_dev', 'https://apitest.authorize.net/xml/v1/request.api');
   }
