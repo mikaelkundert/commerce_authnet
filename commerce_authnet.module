@@ -1670,7 +1670,6 @@ function commerce_authnet_cim_request($payment_method, $request_type, $api_reque
   // Build the array of header information for the request.
   $header = array();
   $header[] = 'Content-type: text/xml; charset=utf-8';
-  $header[] = 'Content-length: ' . strlen($api_request_element->asXML());
 
   // Setup the cURL request.
   $ch = curl_init();
