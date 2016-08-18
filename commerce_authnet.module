@@ -695,6 +695,10 @@ function commerce_authnet_cim_submit_new_card_form_submit($payment_method, $pane
   $card_data->card_exp_year = $pane_values['credit_card']['exp_year'];
   $card_data->status = 1;
 
+  if (isset($pane_values['cardonfile_instance_default'])) {
+    $card_data->instance_default = $pane_values['cardonfile_instance_default'];
+  }
+
   // Save and log the creation of the new card on file.
   commerce_cardonfile_save($card_data);
 
