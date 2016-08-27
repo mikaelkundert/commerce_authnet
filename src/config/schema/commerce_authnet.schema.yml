@@ -1,0 +1,12 @@
+commerce_payment.commerce_payment_gateway.plugin.authnet_hostedfields:
+  type: commerce_payment_authnet_configuration
+  mapping:
+    api_login_id:
+      type: string
+      label: 'API login key'
+    transaction_key:
+      type: string
+      label: 'Transaction key'
+    secret_key:
+      type: string
+      label: 'Secret key'
