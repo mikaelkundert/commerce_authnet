@@ -3,3 +3,6 @@ type: module
 description: 'Implements Authorize.Net payment services for use with Drupal Commerce.'
 package: Commerce
 core: 8.x
+configure: commerce_authnet.admin_commerce_authnet
+dependencies:
+  - commerce_payment

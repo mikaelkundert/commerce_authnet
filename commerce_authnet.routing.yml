@@ -1,0 +1,7 @@
+commerce_authnet.admin_commerce_authnet:
+  path: '/admin/commerce/config/payment-gateways/authnet'
+  defaults:
+    _controller: '\Drupal\commerce_authnet\Form\AuthnetConfigurationForm'
+    _title: 'Authorize.Net gateway configuration'
+  requirements:
+    _permission: 'administer payment gateways'
