@@ -3,6 +3,7 @@
 namespace Drupal\commerce_authnet\Plugin\Commerce\PaymentGateway;
 
 use Drupal\commerce_payment\Entity\PaymentInterface;
+use Drupal\commerce_payment\Entity\PaymentMethodInterface;
 use Drupal\commerce_payment\Exception\HardDeclineException;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
 use Drupal\commerce_payment\PaymentTypeManager;
@@ -93,6 +94,20 @@ class HostedFields extends OnsitePaymentGatewayBase implements OnsitePaymentGate
    * @inheritdoc
    */
   public function createPayment(PaymentInterface $payment, $capture = TRUE) {
+    // TODO...
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public function createPaymentMethod(PaymentMethodInterface $payment_method, array $payment_details) {
+    // TODO...
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public function deletePaymentMethod(PaymentMethodInterface $payment_method) {
     // TODO...
   }
 
