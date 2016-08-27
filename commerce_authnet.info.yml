@@ -1,0 +1,5 @@
+name: Authorize.Net
+type: module
+description: 'Implements Authorize.Net payment services for use with Drupal Commerce.'
+package: Commerce
+core: 8.x
